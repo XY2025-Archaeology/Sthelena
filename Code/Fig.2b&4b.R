@@ -1,11 +1,12 @@
 ################################################################################
 ###  R-Code for the Manuscript of St Helena                                  ###
-###  Author:  Xueye Wang                                                     ###
+###  Author:  Xueye Wang et al.                                              ###
 ###  Date: 15 June 2025                                                      ###
 ###  R version 4.3.2                                                         ###
 ###                                                                          ###
 ################################################################################
 
+######################################This script is for creating Figure 2b and Figure 4b#####################################################################################
 # Install required packages
 install.packages("tidyverse")
 install.packages("sf")
@@ -32,12 +33,12 @@ library(ggspatial)
 setwd("D:/ky/R/sthelenaSr")
 
 #######################################Modeling the geographic origins of individuals in Groups 1–6 shown in Figure 2b and Figure 4b###########################################
-# Load Sr isoscape and associated prediction uncertainty from Wang et al. (2024)
+# Load Sr isoscape and associated prediction uncertainty from Wang et al. (2024), NC paper 
 sr_model <- terra::rast("results/panaf_model_repeatedCV.tif")
 sr_model_se <- terra::rast("results/panaf_model_repeatedCV_se.tif")
 
-# Crop raster to the target region shown in Fig. 2 (skip for Extended Fig. 3)
-r_eck<-terra::rast("results/wc2.1_30s_elev.tif")
+# Crop raster to the target region shown in Figure 2
+r_eck<-terra::rast("results/wc2.1_30s_elev.tif") #Any global raster file can be used
 r_eck_terra <- terra::rast(r_eck)
 e <- ext(1.74, 28, -18, 7.5)
 bioe <- crop(r_eck_terra, e)
@@ -47,7 +48,6 @@ bioe_project <- terra::project(bioe, "+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=W
 sr_stack_1 <- c(sr_model,sr_model_se) 
 ex<-ext(160509.3,2632056,-2349398,986956)
 sr_stack_1<-crop(sr_stack_1,ex)
-
 
 # Load human Sr isotope data
 df<-read_excel("data/Fig2_and_4_data.xlsx")
@@ -63,7 +63,7 @@ iso_examples<- pdRaster(sr_stack_1,examples,genplot=T)
 iso_examples<-sapp(iso_examples,fun=function(x,...){x*(1/max(values(x),na.rm=T))})
 
 # Aggregate rasters to reduce spatial resolution for faster plotting
-iso_examples_agg <- aggregate(iso_examples, fact = 5)
+iso_examples_agg <- aggregate(iso_examples, fact = 2)
 
 # Reproject rasters to WGS84 for visualization
 iso_examples_wgs <- project(iso_examples_agg, "+proj=longlat +datum=WGS84")
@@ -167,7 +167,6 @@ example_4<-ggplot()+
   theme(panel.grid = element_blank(),
         axis.text = element_text(size=8),
         axis.title=element_blank(),legend.position = "none")
-
 
 example_5<-ggplot()+
   geom_tile(data=iso_examples_plot,aes(x=x,y=y,fill=cut(I_344,breaks01)))+
@@ -296,7 +295,7 @@ iso_examples_plot_2$I_476[4]<-0.61
 iso_examples_plot_2$I_476[5]<-0.51
 
 
-# # Plotting Figure 2b (Groups 7-10)
+#Plotting Figure 2b (Groups 7-10)
 example_9<-ggplot()+
   geom_tile(data=iso_examples_plot_2,aes(x=x,y=y,fill=cut(I_284,breaks01)))+
   geom_sf(data=afr,fill=NA,color="darkgrey",linewidth=0.5)+
@@ -366,10 +365,12 @@ Figure2b<-ggarrange(example_1,example_2,example_3,example_4,example_5,example_6,
 # Save the final composite figure as a PDF
 ggsave("figures/Fig.2b.pdf",Figure2b,width=30, height=21,units="cm")
 
-#######################################Plotting two individuals with paried teeth shown in Figure 4b###########################################
+
+
+#######################################Plotting one individual with paried teeth shown in Figure 4b###########################################
 example_13<-ggplot()+
   geom_tile(data=iso_examples_plot,aes(x=x,y=y,fill=cut(I_242_1,breaks01)))+
-  geom_sf(data=afr,fill=NA,color="white",linewidth=0.5)+
+  geom_sf(data=afr,fill=NA,color="#E0E0E0",linewidth=0.5)+
   geom_sf(data=river1,color="blue",linewidth=0.3)+
   scale_x_continuous(limits=c(1.74,28), expand = c(0, 0))+
   scale_y_continuous(limits=c(-18, 7.5), expand = c(0, 0))+
@@ -384,7 +385,7 @@ example_13<-ggplot()+
 
 example_14<-ggplot()+
   geom_tile(data=iso_examples_plot,aes(x=x,y=y,fill=cut(I_242_2,breaks01)))+
-  geom_sf(data=afr,fill=NA,color="white",linewidth=0.5)+
+  geom_sf(data=afr,fill=NA,color="#E0E0E0",linewidth=0.5)+
   geom_sf(data=river1,color="#00FFFF",linewidth=0.3)+
   scale_x_continuous(limits=c(1.74,28), expand = c(0, 0))+
   scale_y_continuous(limits=c(-18, 7.5), expand = c(0, 0))+
@@ -397,43 +398,13 @@ example_14<-ggplot()+
         axis.text = element_text(size=8),
         axis.title=element_blank(),legend.position = "none")
 
-example_15<-ggplot()+
-  geom_tile(data=iso_examples_plot,aes(x=x,y=y,fill=cut(I_267_1,breaks01)))+
-  geom_sf(data=afr,fill=NA,color="darkgrey",linewidth=0.5)+
-  geom_sf(data=river1,color="blue",linewidth=0.3)+
-  scale_x_continuous(limits=c(1.74,28), expand = c(0, 0))+
-  scale_y_continuous(limits=c(-18, 7.5), expand = c(0, 0))+
-  scale_fill_viridis_d(
-    option = "mako", direction = -1, na.value = "#FAEBDDFF",
-    name = "Probability\nsurface", label = breaks01) +
-  theme_bw()+
-  annotation_scale(width_hint=0.15,text_cex = 0.7)+
-  theme(panel.grid = element_blank(),
-        axis.text = element_text(size=8),
-        axis.title=element_blank(),legend.position = "none")
-
-example_16<-ggplot()+
-  geom_tile(data=iso_examples_plot,aes(x=x,y=y,fill=cut(I_267_2,breaks01)))+
-  geom_sf(data=afr,fill=NA,color="white",linewidth=0.5)+
-  geom_sf(data=river1,color="#00FFFF",linewidth=0.3)+
-  scale_x_continuous(limits=c(1.74,28), expand = c(0, 0))+
-  scale_y_continuous(limits=c(-18, 7.5), expand = c(0, 0))+
-  scale_fill_viridis_d(
-    option = "mako", direction = -1, na.value = "#FAEBDDFF",
-    name = "Probability\nsurface", label = breaks01) +
-  theme_bw()+
-  annotation_scale(width_hint=0.15,text_cex = 0.7)+
-  theme(panel.grid = element_blank(),
-        axis.text = element_text(size=8),
-        axis.title=element_blank(),legend.position = "none")
-
-# Arrange plots into a 2×2 grid
-Figure4b<-ggarrange(example_13,example_14,example_15,example_16,nrow=2,ncol=2,common.legend = T,legend = "right")
+# Arrange plots
+Figure4b<-ggarrange(example_13,example_14,nrow=1,ncol=2,common.legend = T,legend = "right")
 
 # Export the figure as a high-resolution PDF
-ggsave("figures/Fig.4b.pdf",Figure4b,width=20, height=20,units="cm")
+ggsave("figures/Fig.4b.pdf",Figure4b,width=18, height=20,units="cm")
 
-# we used adobe illustrator to further revise the figures 
+# we used Adobe Illustrator to further revise the figures 
 
 
 
